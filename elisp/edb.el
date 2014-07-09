@@ -882,4 +882,14 @@ breakpoints are already marked as stale."
   (loop for x in list
         when (funcall pred x) return x))
 
+(defun edb-auto-down (node)
+  (message "Node %S down, disconnecting EDB monitor" node)
+  (kill-buffer edb-monitor-buffer))
+
+(defun edb-setup-auto-monitor ()
+  ;; (add-hook 'erl-nodeup-hook 'edb-auto-up)
+  (add-hook 'erl-nodedown-hook 'edb-auto-down t))
+
+(edb-setup-auto-monitor)
+
 (provide 'edb)
