@@ -188,6 +188,9 @@ Use edb-restore-dbg-state to restore the state to the erlang node."
 (defvar edb-processes nil
   "EWOC of processes running interpreted code.")
 
+(defvar edb-attached-processes nil
+  "List of buffers representing attached buffers.")
+
 (defstruct (edb-process
             (:constructor nil)
             (:constructor make-edb-process (pid mfa status info)))
@@ -265,6 +268,12 @@ Returns NIL if this cannot be ensured."
     (if (edb-monitor-live-p)
         t
       (edb-start-monitor node))))
+
+(defun edb-attach-delete-all-buffers ()
+  "Cleanup all attached process buffers."
+  (mapc (lambda (buf)
+          (kill-buffer buf))
+        edb-attached-processes))
 
 (defun edb-monitor-node-change-p (node)
   "Do we have to detach/reattach to debug on NODE?"
@@ -403,6 +412,7 @@ When MOD is given, only update those visiting that module."
   (setq edb-interpreted-modules '())
   (edb-delete-all-breakpoints)
   (edb-update-source-buffers)
+  (edb-attach-delete-all-buffers)
   (setq edb-monitor-node nil))
 
 ;; ----------------------------------------------------------------------
@@ -445,8 +455,10 @@ When MOD is given, only update those visiting that module."
 (defun edb-attach (pid)
   (let ((old-window-config (current-window-configuration)))
     (delete-other-windows)
-    (switch-to-buffer (edb-attach-buffer pid))
-    (setq erl-old-window-configuration old-window-config)))
+    (let ((attach-buffer (edb-attach-buffer pid)))
+      (setq edb-attached-processes (cons attach-buffer edb-attached-processes))
+      (switch-to-buffer attach-buffer)
+      (setq erl-old-window-configuration old-window-config))))
 
 (defun edb-attach-buffer (pid)
   (let ((bufname (edb-attach-buffer-name pid)))
