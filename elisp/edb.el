@@ -91,7 +91,9 @@ edb."))
            (['rex 'uninterpreted]
             (message "Stopped interpreting: %S" module))
            (['rex ['badrpc reason]]
-            (message "Failed to interpret-toggle: %S" reason)))))))
+            (message "Failed to interpret-toggle: %S" reason))
+           (['rex 'no_debug_info]
+            (message "Failed to interpret since no debug info: %S" module)))))))
 
 (defun edb-module ()
   (if (erlang-get-module)
@@ -883,8 +885,9 @@ breakpoints are already marked as stale."
         when (funcall pred x) return x))
 
 (defun edb-auto-down (node)
-  (message "Node %S down, disconnecting EDB monitor" node)
-  (kill-buffer edb-monitor-buffer))
+  (when edb-monitor-buffer
+    (message "Node %S down, disconnecting EDB monitor" node)
+    (kill-buffer edb-monitor-buffer)))
 
 (defun edb-setup-auto-monitor ()
   ;; (add-hook 'erl-nodeup-hook 'edb-auto-up)
