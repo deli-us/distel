@@ -475,8 +475,15 @@ When MOD is given, only update those visiting that module."
                    (erl-pid-id pid)
                    (erl-pid-node pid))
      (rename-buffer (edb-attach-buffer-name pid))
-     ;; We must inhibit the erlang-new-file-hook, otherwise we trigger
-     ;; it by entering erlang-mode in an empty buffer
+     (condition-case error
+         ;; We must inhibit the erlang-new-file-hook, otherwise we trigger
+         ;; it by entering erlang-mode in an empty buffer
+         (let ((erlang-new-file-hook nil))
+           (erlang-mode))
+       (error (progn
+                (message "Error in erlang-mode hook when spawning new attach process. Check .emacs!")
+                (erl-terminate `["Error in erlang-mode hook:" ,(format "%S" error)]))))
+     
      (let ((erlang-new-file-hook nil))
        (erlang-mode))
      (erlang-extended-mode t)
